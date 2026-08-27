@@ -2,3 +2,9 @@ node_modules/
 dist/
 .DS_Store
 *.local
+
+# Tasarim taslagi ve arac artiklari
+.image-slots.state.json
+.thumbnail
+image-slot.js
+*.dc.html
