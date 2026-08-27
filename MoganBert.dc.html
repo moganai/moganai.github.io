@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="description" content="MoganBert — sıfırdan eğitilmiş Türkçe encoder modeli. Eğitim süreci, veri karışımı ve benchmark sonuçları.">
+<meta name="theme-color" content="#E9E1D3">
+<script src="./image-slot.js"></script>
+<meta property="og:title" content="MoganBert — Türkçe encoder modeli">
+<meta property="og:description" content="Eğitim süreci, veri karışımı ve değerlendirme protokolleri.">
+<title>MoganBert — Türkçe encoder modeli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=latin,latin-ext" rel="stylesheet">
+<style>
+:root{--kagit:#E9E1D3;--yuzey:#DFD5C4;--cizgi:#C9BCA7;--murekkep:#241F19;--soluk:#6B6154;--gol:#2E4A3F;--saz:#8A7345;--flamingo:#A5726A}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--kagit);color:var(--murekkep);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--gol);text-decoration-thickness:1px;text-underline-offset:2px;transition:color 120ms linear}
+a:hover{color:var(--saz)}
+:focus-visible{outline:2px solid var(--gol);outline-offset:2px}
+th,td{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style>
+</helmet>
+
+<a href="#icerik" style="position:absolute;left:-9999px;top:0;background:var(--yuzey);color:var(--murekkep);padding:8px 12px;z-index:20;font-size:14px" style-focus="left:8px;top:8px">İçeriğe geç</a>
+
+<header style="position:sticky;top:0;z-index:10;height:56px;background:var(--kagit);border-bottom:1px solid var(--cizgi)">
+  <div style="max-width:1040px;margin:0 auto;height:100%;padding:0 24px;display:flex;align-items:center;gap:24px">
+    <a href="#giris" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--murekkep);flex:none">
+      <svg width="26" height="16" viewBox="0 0 26 16" aria-hidden="true" style="display:block;overflow:visible">
+        <g fill="none" stroke="var(--gol)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.5 7.6 C4 4.8 9 3.4 14.5 3.8 C18.5 4.1 21.5 5.1 23.5 6.6 C25.5 8.1 24.5 10.6 21 12 C16.5 13.8 9 14 4.8 12.4 C1.6 11.2 1 9.2 2.5 7.6 Z"></path>
+          <path d="M6.5 10 C10.5 9.1 16.5 8.9 20.5 9.7"></path>
+          <path d="M4.4 6.3 C4.2 4.4 4.6 2.6 5.6 1.2"></path>
+        </g>
+      </svg>
+      <span style="font-family:'Source Serif 4',Georgia,serif;font-size:20px;font-weight:600;letter-spacing:-0.012em">MoganBert</span>
+    </a>
+    <nav aria-label="Bölümler" style="flex:1;min-width:0;overflow-x:auto;overflow-y:hidden">
+      <ul style="display:flex;gap:18px;list-style:none;margin:0;padding:0;white-space:nowrap;font-size:14px">
+        <li><a href="#mimari" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Mimari</a></li>
+        <li><a href="#egitim" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Eğitim</a></li>
+        <li><a href="#veri" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Veri</a></li>
+        <li><a href="#degerlendirme" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Değerlendirme</a></li>
+        <li><a href="#ablasyon" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Ablasyon</a></li>
+        <li><a href="#kullanim" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Kullanım</a></li>
+        <li><a href="#ciktilar" style="color:var(--soluk);text-decoration:none" style-hover="color:var(--gol)">Çıktılar</a></li>
+      </ul>
+    </nav>
+    <div style="display:flex;gap:14px;flex:none;font-size:14px;font-family:'IBM Plex Mono',monospace">
+      <a href="#ciktilar" style="text-decoration:none">HF</a>
+      <a href="#ciktilar" style="text-decoration:none">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<article id="icerik" style="max-width:1040px;margin:0 auto;padding:0 24px 96px">
+
+  <section id="giris" style="padding:72px 0 0">
+    <svg width="112" height="64" viewBox="0 0 112 64" role="img" aria-label="Mogan Gölü kıyı hattının tek çizgiyle sadeleştirilmiş konturu; kıyıda iki kamış." style="display:block;margin:0 0 20px;overflow:visible">
+      <g fill="none" stroke="var(--gol)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 30 C18 19 36 13.5 58 15 C74 16 86 20 96 26 C105 31.5 104 41 92 46.5 C76 54 46 55.5 28 50 C14 45.8 7 38 12 30 Z"></path>
+        <path d="M26 39.5 C42 35.8 66 35 82 38"></path>
+        <path d="M38 46 C50 43.6 64 43.2 74 44.6"></path>
+        <path d="M20 25.5 C19 19 19.5 13 22 8"></path>
+        <path d="M30 19.5 C31 14.5 33.5 10.5 37 7.5"></path>
+      </g>
+    </svg>
+    <h1 style="font-family:'Source Serif 4',Georgia,serif;font-size:40px;line-height:1.15;font-weight:500;margin:0 0 16px;letter-spacing:-0.015em">MoganBert</h1>
+    <p style="max-width:680px;font-size:19px;margin:0 0 20px;color:var(--murekkep);text-wrap:pretty">Türkçe için sıfırdan tasarlayıp eğittiğimiz bir encoder modeli. Veri havuzunu Common Crawl ve FineWeb'den kendi hattımızla topladık, tokenizer'ı kendimiz eğittik ve ön eğitimi iki fazlı bir müfredatla (CLM %25 → MLM %75) yürütüyoruz. Bu sayfada süreci ve ölçümleri paylaşıyoruz.</p>
+    <p style="max-width:680px;font-size:14px;color:var(--soluk);margin:0 0 24px">
+      Furkan Yılmaz, Habibe Aleyna Taşdemir, Muhammed Faruk Gözay, Bekir Top · MoganAI · 2026
+    </p>
+    <p style="max-width:680px;font-size:15px;color:var(--soluk);margin:0 0 24px;font-family:'IBM Plex Mono',monospace">Durum: encoder koşusu sürüyor (4 × H100, spot). Sayfadaki TRGLUE sonuçları ablasyon ve ara checkpoint ölçümleridir.</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;margin:0 0 40px">
+      <a href="https://huggingface.co/moganai" style="border:1px solid var(--cizgi);border-radius:3px;padding:8px 14px;font-size:14px;text-decoration:none;white-space:nowrap;flex:none;color:var(--gol);transition:background-color 120ms linear,color 120ms linear" style-hover="background:var(--yuzey)">Hugging Face · moganai</a>
+      <a href="#degerlendirme" style="border:1px solid var(--cizgi);border-radius:3px;padding:8px 14px;font-size:14px;text-decoration:none;white-space:nowrap;flex:none;color:var(--gol);transition:background-color 120ms linear,color 120ms linear" style-hover="background:var(--yuzey)">TRGLUE sonuçları</a>
+      <a href="#ciktilar" style="border:1px solid var(--cizgi);border-radius:3px;padding:8px 14px;font-size:14px;text-decoration:none;white-space:nowrap;flex:none;color:var(--gol);transition:background-color 120ms linear,color 120ms linear" style-hover="background:var(--yuzey)">Kaynak kod</a>
+    </div>
+    <dl style="margin:0;border-top:1px solid var(--cizgi);border-bottom:1px solid var(--cizgi);padding:16px 0;display:flex;flex-wrap:wrap;gap:32px">
+      <div style="min-width:120px">
+        <dt style="font-size:14px;color:var(--soluk);margin:0 0 4px">Parametre</dt>
+        <dd style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:19px">149M</dd>
+      </div>
+      <div style="min-width:120px">
+        <dt style="font-size:14px;color:var(--soluk);margin:0 0 4px">Blok uzunluğu</dt>
+        <dd style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:19px">1.024 token</dd>
+      </div>
+      <div style="min-width:120px">
+        <dt style="font-size:14px;color:var(--soluk);margin:0 0 4px">Sözlük boyutu</dt>
+        <dd style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:19px">50.048</dd>
+      </div>
+      <div style="min-width:120px">
+        <dt style="font-size:14px;color:var(--soluk);margin:0 0 4px">Veri havuzu</dt>
+        <dd style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:19px">108B token</dd>
+      </div>
+      <div style="min-width:120px">
+        <dt style="font-size:14px;color:var(--soluk);margin:0 0 4px">TRGLUE ORT (8 görev)</dt>
+        <dd style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:19px">78.41 ± 0.32</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section id="isim" style="padding:64px 0 0;border-top:1px solid var(--cizgi);margin-top:64px">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 12px">İsim üzerine</h2>
+    <p style="max-width:680px;margin:0;text-wrap:pretty">Mogan, Ankara Gölbaşı'nda sığ ve durgun bir göl. Beslendiği dereler farklı yönlerden gelir, gölde tek bir su kütlesinde birleşir. Modelin eğitimi de benzer biçimde ilerledi: ayrı ayrı yürüyen aşamalar sonunda tek bir ağırlık kümesinde toplandı. Adı buradan geliyor.</p>
+    <figure style="margin:32px 0 0">
+      <div style="position:relative;width:100%;height:340px;border:1px solid var(--cizgi)">
+        <image-slot id="mogan-golu" shape="rect" fit="cover" placeholder="Mogan Gölü — geniş kıyı fotoğrafı (sisli sabah)"></image-slot>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div style="position:relative;width:100%;height:180px;border:1px solid var(--cizgi)">
+          <image-slot id="mogan-saz" shape="rect" fit="cover" placeholder="Kamışlık / saz — yakın plan"></image-slot>
+        </div>
+        <div style="position:relative;width:100%;height:180px;border:1px solid var(--cizgi)">
+          <image-slot id="mogan-kus" shape="rect" fit="cover" placeholder="Kıyıdaki su kuşları"></image-slot>
+        </div>
+      </div>
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk);margin:8px 0 0">Mogan Gölü, Gölbaşı — kıyı, sazlık ve su kuşları. Fotoğraf: [DOLDURULACAK]</figcaption>
+    </figure>
+  </section>
+
+  <section id="soyagaci" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Eğitim soyağacı</h2>
+    <p style="max-width:680px;margin:0 0 24px;color:var(--soluk);font-size:17px">Yukarıdan gelen kollar checkpoint'leri, kolların birleştiği noktalar ağırlık ortalama (soup) adımlarını, alttaki su kütlesi yayınlanan modeli gösterir.</p>
+    <figure style="margin:0">
+      <div style="overflow-x:auto;border-top:1px solid var(--cizgi);border-bottom:1px solid var(--cizgi);padding:24px 0">
+        <svg viewBox="0 0 880 400" width="880" height="400" role="img" aria-label="Eğitim soyağacı: altı checkpoint kolu iki ara birleşme noktasında toplanıyor, ardından tek bir göl konturunda birleşiyor." style="display:block;min-width:720px;width:100%;height:auto;max-width:880px;margin:0 auto;overflow:visible">
+          <g fill="none" stroke="var(--gol)" stroke-width="1.5" stroke-linecap="round">
+            <path d="M52 52 C62 108 104 128 148 152 C170 164 186 174 196 188"></path>
+            <path d="M198 52 C202 104 190 132 196 188"></path>
+            <path d="M340 52 C330 106 288 128 244 154 C220 168 204 176 196 188"></path>
+            <path d="M548 52 C540 110 578 130 622 156 C648 171 662 178 668 188"></path>
+            <path d="M664 52 C672 100 662 134 668 188"></path>
+            <path d="M816 52 C806 112 764 130 720 154 C694 168 676 177 668 188"></path>
+            <path d="M196 190 C200 244 268 250 330 268 C378 282 410 292 428 302"></path>
+            <path d="M668 190 C662 246 596 252 530 270 C478 284 446 293 428 302"></path>
+            <path d="M170 326 C244 300 348 292 428 300 C512 308 632 300 698 324 C748 342 722 372 654 380 C528 392 306 386 212 370 C158 361 138 338 170 326 Z"></path>
+            <path d="M226 344 C296 334 388 332 450 340"></path>
+            <path d="M262 360 C328 352 396 350 442 355"></path>
+            <path d="M312 330 C356 326 402 326 438 329"></path>
+          </g>
+          <g fill="var(--soluk)" font-family="'IBM Plex Mono',monospace" font-size="11">
+            <text x="56" y="34" text-anchor="middle">rastgele başlatma</text>
+            <text x="196" y="34" text-anchor="middle">aşama-1 ckpt</text>
+            <text x="336" y="34" text-anchor="middle">uzun bağlam ckpt</text>
+            <text x="544" y="34" text-anchor="middle">yüksek LR ckpt</text>
+            <text x="668" y="34" text-anchor="middle">soğutma ckpt</text>
+            <text x="812" y="34" text-anchor="middle">damıtma ckpt</text>
+            <text x="208" y="206" text-anchor="start" paint-order="stroke fill" stroke="var(--kagit)" stroke-width="3" stroke-linejoin="round">ortalama · A</text>
+            <text x="656" y="206" text-anchor="end" paint-order="stroke fill" stroke="var(--kagit)" stroke-width="3" stroke-linejoin="round">ortalama · B</text>
+          </g>
+          <g fill="var(--murekkep)" font-family="'IBM Plex Mono',monospace" font-size="12">
+            <text x="470" y="348" text-anchor="middle" paint-order="stroke fill" stroke="var(--kagit)" stroke-width="3" stroke-linejoin="round">Mogan-anneal1k</text>
+          </g>
+          <g fill="var(--gol)">
+            <circle cx="196" cy="188" r="2.5"></circle>
+            <circle cx="668" cy="188" r="2.5"></circle>
+            <circle cx="428" cy="300" r="2.5"></circle>
+          </g>
+        </svg>
+      </div>
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk);margin:8px 0 0">Şekil 1 — Eğitim aşamalarının birleşme şeması; aşama ayarları için aşağıdaki tabloya bakınız.</figcaption>
+    </figure>
+  </section>
+
+  <section id="mimari" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Model mimarisi</h2>
+    <p style="max-width:680px;margin:0 0 24px;color:var(--soluk)">Mimari, ModernBERT reçetesini temel alır; attention yolu iki fazlı müfredat için yeniden yazıldı (HuggingFace'in ModernBertModel'i yalnızca çift yönlüdür).</p>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:520px;font-size:17px">
+        <tbody>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Parametre sayısı</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">149M</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Gizli boyut</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">768</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Katman / attention başlığı</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">[DOLDURULACAK]</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Attention deseni</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">dönüşümlü yerel / global; yerel pencere CLM'de (w−1, 0), MLM'de (w/2, w/2)</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">FFN</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">GLU (ModernBERT ara genişliği)</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Pozisyon kodlaması</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">RoPE; paketlenmiş dizide her doküman için sıfırlanan position_ids</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Blok uzunluğu</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">1.024 token (doküman sınırına duyarlı paketleme, cu_seqlens)</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Tokenizer</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">SentencePiece Unigram · 50.048 · byte_fallback</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Özel token yerleşimi</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">[UNK]=0 [PAD]=1 [CLS]=2 [SEP]=3 [MASK]=4 [EOS]=5 · byte 22–277 · parçalar 278+</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><th scope="row" style="text-align:left;padding:10px 12px 10px 0;width:34%;font-weight:400;font-size:15px;color:var(--soluk)">Maskeleme</th><td style="padding:8px 12px;font-family:'IBM Plex Mono',monospace">token düzeyi rastgele (WWM ayrı ablasyon); değerlendirmede 0.30</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="font-size:19px;font-weight:600;margin:40px 0 8px">Tokenizer karşılaştırması</h3>
+    <p style="max-width:680px;margin:0 0 20px;color:var(--soluk)">Üç sözlük boyutu eğitip TR-MMLU üzerinde (6.200 soru, 1.743.375 karakter) ölçtük. 64K her verimlilik metriğinde 50K'yı geçiyor; ancak 768 gizli boyutta 14.000 ek token ≈ 10.7M ek parametre, yani 149M'lik bir modelin bütçesinin ~%7'si. %2.7'lik fertility farkı bu maliyeti karşılamadığı için 50K tabanı seçildi; nihai boyut 50.048 (64'ün katı).</p>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:640px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Tokenizer</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Vocab</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Fertility ↓</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Krk/token ↑</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">TR% ↑</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Pure% ↑</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;color:var(--gol)">Mogan-64K</td><td style="padding:8px 12px;text-align:right">64.000</td><td style="padding:8px 12px;text-align:right;font-weight:600">1.5268</td><td style="padding:8px 12px;text-align:right;font-weight:600">5.0245</td><td style="padding:8px 12px;text-align:right;font-weight:600">84.71</td><td style="padding:8px 12px;text-align:right">40.83</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;color:var(--gol)">Mogan-50K (seçilen)</td><td style="padding:8px 12px;text-align:right">50.000</td><td style="padding:8px 12px;text-align:right">1.5682</td><td style="padding:8px 12px;text-align:right">4.8918</td><td style="padding:8px 12px;text-align:right">84.42</td><td style="padding:8px 12px;text-align:right">42.67</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Mürşit</td><td style="padding:8px 12px;text-align:right">59.008</td><td style="padding:8px 12px;text-align:right">1.6326</td><td style="padding:8px 12px;text-align:right">4.6989</td><td style="padding:8px 12px;text-align:right">77.00</td><td style="padding:8px 12px;text-align:right">35.81</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">MBERT-tr</td><td style="padding:8px 12px;text-align:right">32.000</td><td style="padding:8px 12px;text-align:right">1.7037</td><td style="padding:8px 12px;text-align:right">4.5029</td><td style="padding:8px 12px;text-align:right">78.73</td><td style="padding:8px 12px;text-align:right">35.65</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">BERTurk</td><td style="padding:8px 12px;text-align:right">32.000</td><td style="padding:8px 12px;text-align:right">1.8008</td><td style="padding:8px 12px;text-align:right">4.2600</td><td style="padding:8px 12px;text-align:right">81.06</td><td style="padding:8px 12px;text-align:right;font-weight:600">43.22</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">TabiBERT</td><td style="padding:8px 12px;text-align:right">50.176</td><td style="padding:8px 12px;text-align:right">1.8501</td><td style="padding:8px 12px;text-align:right">4.1464</td><td style="padding:8px 12px;text-align:right">59.84</td><td style="padding:8px 12px;text-align:right">30.46</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">XLM-R</td><td style="padding:8px 12px;text-align:right">250.002</td><td style="padding:8px 12px;text-align:right">1.9440</td><td style="padding:8px 12px;text-align:right">3.9462</td><td style="padding:8px 12px;text-align:right">56.09</td><td style="padding:8px 12px;text-align:right">41.78</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="max-width:680px;margin:16px 0 0;font-size:15px;color:var(--soluk)">Bağımsız iki test setinde de aynı yön: Türkçe Wikipedia'da (30.000 doküman) Mogan-64K 4.705 krk/token · 1.640 fertility, BERTurk 4.391 · 1.757; FLORES-200'de (2.009 cümle) Mogan-64K 5.277 · 1.460, BERTurk 4.932 · 1.563. Kod corpus'unda (18 dil, 540 dosya) kayıpsız roundtrip oranı Mogan %100, Mürşit %96, TabiBERT %49, BERTurk %0.</p>
+  </section>
+
+  <section id="egitim" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Eğitim adımları</h2>
+    <p style="max-width:680px;margin:0 0 24px;color:var(--soluk)">Ön eğitim iki fazlıdır: ilk çeyrekte nedensel dil modelleme (CLM), kalanında maskeli dil modelleme (MLM). Geçiş, WSD şedülünün "stable" fazı içinde, öğrenme oranı düşüşe girmeden yapılır; decay yalnızca en sonda gelir.</p>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:760px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Aşama</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Başlangıç</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Veri</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Adım / batch</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">LR programı</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Aşamanın rolü</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">1 · CLM (%25)</td><td style="padding:8px 12px">rastgele</td><td style="padding:8px 12px">~9.4B token karışım</td><td style="padding:8px 12px">~2.500 / ~98K token</td><td style="padding:8px 12px">WSD · stable</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Erken adımlarda daha veri-verimli; dilin akışını öğretir.</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">2 · MLM (%75)</td><td style="padding:8px 12px">CLM ckpt (decay öncesi)</td><td style="padding:8px 12px">aynı karışım</td><td style="padding:8px 12px">~7.500</td><td style="padding:8px 12px">WSD · stable → decay</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Temsil kalitesini üstlenir; çift yönlü kipte pencere simetrikleşir.</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">3 · full pre-train</td><td style="padding:8px 12px">ABL-2 konfigürasyonu</td><td style="padding:8px 12px">108B token havuzu</td><td style="padding:8px 12px">[DOLDURULACAK]</td><td style="padding:8px 12px">WSD</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Sürüyor — 4 × H100 spot; kesintiye dayanıklı kaldığı yerden devam.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="max-width:680px;margin:16px 0 0;font-size:15px;color:var(--soluk)">Adım sayıları 10.000 adımlık ablasyon koşusuna aittir. Mimaride sessizce yanlış model üretebilecek dört tuzağı ayrıca ele aldık: CLM fazında yerel pencerenin nedensel olması, doküman sınırına duyarlı paketleme, RoPE pozisyonlarının doküman başına sıfırlanması ve kayıp fonksiyonunda doküman sınırı maskesi (son pozisyonun etiketi −100).</p>
+  </section>
+
+  <section id="veri" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Veri karışımı</h2>
+    <p style="max-width:680px;margin:0 0 24px;color:var(--soluk)">Havuzu üçüncü parti çok-dilli derlemelerin alt kümesi olarak değil, doğrudan Common Crawl ham verisinden ve FineWeb'in 2013–2024 arşivinden ürettik: 600 GB+ ham Türkçe metin, 108B token. Aşağıdaki tablo ablasyon koşusunda kullanılan ~9.4B token'lık alt karışımdır.</p>
+    <figure style="margin:0 0 24px">
+      <svg viewBox="0 0 880 64" width="880" role="img" aria-label="Tokenizer corpus'unun dil dağılımı: yüzde 83 Türkçe, yüzde 11 İngilizce, yüzde 6 kod." style="display:block;width:100%;height:auto;max-width:880px">
+        <defs>
+          <pattern id="tarama-veri" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="var(--soluk)" stroke-width="0.7" opacity="0.5"></line>
+          </pattern>
+          <pattern id="tarama-veri-gol" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="var(--gol)" stroke-width="0.8"></line>
+          </pattern>
+        </defs>
+        <g stroke-width="1">
+          <rect x="0.5" y="8.5" width="728" height="23" fill="url(#tarama-veri-gol)" stroke="var(--gol)"></rect>
+          <rect x="728.5" y="8.5" width="96" height="23" fill="url(#tarama-veri)" stroke="var(--soluk)"></rect>
+          <rect x="824.5" y="8.5" width="54" height="23" fill="url(#tarama-veri)" stroke="var(--soluk)"></rect>
+        </g>
+        <g font-family="'IBM Plex Mono',monospace" font-size="11">
+          <text x="0" y="50" fill="var(--gol)">%83 Türkçe</text>
+          <text x="730" y="50" fill="var(--soluk)">%11 İngilizce</text>
+          <text x="878" y="50" text-anchor="end" fill="var(--soluk)">%6 kod</text>
+        </g>
+      </svg>
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk);margin:8px 0 0">Şekil 2 — Tokenizer eğitim corpus'unun dil dağılımı. Kod hattı ayrı normalize edilir: girinti korunur, satır sayısı sabit kalır.</figcaption>
+    </figure>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:520px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Kaynak</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Token</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Oran</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Filtre / not</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">CommonCrawl</td><td style="padding:8px 12px;text-align:right">3.63B</td><td style="padding:8px 12px;text-align:right">%38.6</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">S3 byte-range indirme, trafilatura ile metin çıkarımı</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Kod (18 dil)</td><td style="padding:8px 12px;text-align:right">1.70B</td><td style="padding:8px 12px;text-align:right">%18.1</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Ayrı normalizasyon hattı; girinti korunur</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">FineWeb-edu (en)</td><td style="padding:8px 12px;text-align:right">1.25B</td><td style="padding:8px 12px;text-align:right">%13.3</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">İngilizce eğiticilik alt kümesi</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Hukuk</td><td style="padding:8px 12px;text-align:right">780M</td><td style="padding:8px 12px;text-align:right">%8.3</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Mevzuat ve karar metinleri; nbsp temizliği kritik</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Makale</td><td style="padding:8px 12px;text-align:right">627M</td><td style="padding:8px 12px;text-align:right">%6.7</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Akademik yayınlar</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">FinePdfs</td><td style="padding:8px 12px;text-align:right">588M</td><td style="padding:8px 12px;text-align:right">%6.3</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">PDF kaynakları</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Kitap</td><td style="padding:8px 12px;text-align:right">316M</td><td style="padding:8px 12px;text-align:right">%3.4</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Batch OCR (Gemini 2.5 Flash-Lite), etiketli satır formatı</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">FineMath-4Plus</td><td style="padding:8px 12px;text-align:right">303M</td><td style="padding:8px 12px;text-align:right">%3.2</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Matematik</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">turkce-matematik-data</td><td style="padding:8px 12px;text-align:right">221M</td><td style="padding:8px 12px;text-align:right">%2.4</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Türkçe matematik</td></tr>
+          <tr style="border-top:1.5px solid var(--murekkep);border-bottom:1px solid var(--cizgi)"><td style="padding:10px 12px">Toplam</td><td style="padding:10px 12px;text-align:right;font-weight:600">~9.4B</td><td style="padding:10px 12px;text-align:right">%100</td><td style="padding:10px 12px;font-family:'IBM Plex Sans',sans-serif">Ablasyon koşusunun veri hattı</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="font-size:19px;font-weight:600;margin:40px 0 8px">Kalite filtresi</h3>
+    <p style="max-width:680px;margin:0 0 20px;color:var(--soluk)">Sezgisel filtreler (Gopher/C4 tarzı uzunluk, sembol ve tekrar oranları) spam, bahis ve SEO içeriğini ayıklamaya yetmedi — bu metinler dilbilgisel olarak geçerli Türkçe. Anlam bazlı filtre için üç yaklaşımı sırayla denedik; sonuncusu üretime girdi.</p>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:640px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Yaklaşım</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Etiket</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Doğruluk</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Hız (dok/s)</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Sonuç</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">fastText (baseline)</td><td style="padding:8px 12px">—</td><td style="padding:8px 12px;text-align:right">—</td><td style="padding:8px 12px;text-align:right">—</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Meşru kısa metni sistematik olarak eledi.</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">LLM-etiketli fastText</td><td style="padding:8px 12px">~6.000</td><td style="padding:8px 12px;text-align:right">%54</td><td style="padding:8px 12px;text-align:right">—</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">6 sınıf için veri hacmi yetersiz.</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Türkçe BERT (fine-tune)</td><td style="padding:8px 12px">~6.000</td><td style="padding:8px 12px;text-align:right">%70.7 (±1: %93.9)</td><td style="padding:8px 12px;text-align:right">96.5</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">Doğru ama yavaş; öğretmen modele dönüştü.</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;color:var(--gol)">Damıtılmış fastText</td><td style="padding:8px 12px">~480.000</td><td style="padding:8px 12px;text-align:right;font-weight:600">%94.4 BERT uyumu</td><td style="padding:8px 12px;text-align:right;font-weight:600">8.880</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">~90 kat hızlanma; üretime alındı.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="max-width:680px;margin:16px 0 0;font-size:15px;color:var(--soluk)">Üretimde ölçülen işleme hızı 430–590 kayıt/saniye, kabul oranı işlenen aya göre %29–55. Hat tek geçişte çalışır: indirme, boilerplate temizliği, dil doğrulama, kalite sınıflandırması, PII maskeleme ve MinHash dedup.</p>
+  </section>
+
+  <section id="degerlendirme" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Değerlendirme</h2>
+    <p style="max-width:680px;margin:0 0 24px;color:var(--soluk)">Modelleri TRGLUE'nun sekiz görevinde, resmi beş seed ile ince ayardan geçirdik. Tablodaki her hücre bu beş çalışmanın ortalaması ve standart sapmasıdır; ORT satırı sekiz görev ortalamasıdır. Görev metrikleri resmi TRGLUE tanımına göredir. İnce ayar hiperparametreleri: [DOLDURULACAK].</p>
+
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">Protokol</h3>
+    <div style="overflow-x:auto;margin-bottom:40px">
+      <table style="border-collapse:collapse;width:100%;min-width:700px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Görev</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Tür</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Metrik</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Tekrar</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">cola</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">dilbilgisel kabul edilebilirlik</td><td style="padding:8px 12px">Matthews korelasyonu</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">sst2</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">duygu sınıflandırma</td><td style="padding:8px 12px">doğruluk</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mrpc</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">cümle eşdeğerliği</td><td style="padding:8px 12px">doğruluk</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">stsb</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">anlamsal benzerlik (regresyon)</td><td style="padding:8px 12px">Spearman ρ</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">qqp</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">soru çifti eşleme</td><td style="padding:8px 12px">doğruluk</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mnli</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">doğal dil çıkarımı</td><td style="padding:8px 12px">doğruluk</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">qnli</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">soru–cümle çıkarımı</td><td style="padding:8px 12px">doğruluk</td><td style="padding:8px 12px">5 seed</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">rte</td><td style="padding:8px 12px;font-family:'IBM Plex Sans',sans-serif">metinsel içerme</td><td style="padding:8px 12px">doğruluk</td><td style="padding:8px 12px">5 seed</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">Sonuçlar</h3>
+    <div style="overflow-x:auto;margin-bottom:40px">
+      <table style="border-collapse:collapse;width:100%;min-width:900px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Görev</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">BERTurk</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">ModernBERT-TR</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">TabiBERT</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Mogan-anneal</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--gol)">Mogan-anneal1k</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Mogan-soup</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">cola</td><td style="padding:8px 12px;text-align:right;font-weight:600">41.71±1.87</td><td style="padding:8px 12px;text-align:right">26.62±2.36</td><td style="padding:8px 12px;text-align:right">31.89±1.76</td><td style="padding:8px 12px;text-align:right">35.92±2.29</td><td style="padding:8px 12px;text-align:right">37.63±1.97</td><td style="padding:8px 12px;text-align:right">32.70±2.42</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">sst2</td><td style="padding:8px 12px;text-align:right;font-weight:600">87.62±0.19</td><td style="padding:8px 12px;text-align:right">86.47±0.44</td><td style="padding:8px 12px;text-align:right">85.72±0.27</td><td style="padding:8px 12px;text-align:right">85.60±0.13</td><td style="padding:8px 12px;text-align:right">85.83±0.11</td><td style="padding:8px 12px;text-align:right">85.59±0.13</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mrpc</td><td style="padding:8px 12px;text-align:right;font-weight:600">71.00±0.94</td><td style="padding:8px 12px;text-align:right">70.45±0.63</td><td style="padding:8px 12px;text-align:right">68.91±0.77</td><td style="padding:8px 12px;text-align:right">68.39±1.55</td><td style="padding:8px 12px;text-align:right">69.18±0.56</td><td style="padding:8px 12px;text-align:right">69.47±1.13</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">stsb</td><td style="padding:8px 12px;text-align:right;font-weight:600">72.08±0.60</td><td style="padding:8px 12px;text-align:right">70.51±0.98</td><td style="padding:8px 12px;text-align:right">69.18±5.38</td><td style="padding:8px 12px;text-align:right">68.96±1.28</td><td style="padding:8px 12px;text-align:right">69.59±1.42</td><td style="padding:8px 12px;text-align:right">69.00±1.00</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">qqp</td><td style="padding:8px 12px;text-align:right">95.04±0.07</td><td style="padding:8px 12px;text-align:right;font-weight:600">95.17±0.03</td><td style="padding:8px 12px;text-align:right">95.08±0.08</td><td style="padding:8px 12px;text-align:right">94.46±0.06</td><td style="padding:8px 12px;text-align:right">94.54±0.08</td><td style="padding:8px 12px;text-align:right">94.48±0.05</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mnli</td><td style="padding:8px 12px;text-align:right;font-weight:600">89.11±0.11</td><td style="padding:8px 12px;text-align:right">88.13±0.30</td><td style="padding:8px 12px;text-align:right">88.00±0.21</td><td style="padding:8px 12px;text-align:right">88.10±0.14</td><td style="padding:8px 12px;text-align:right">88.24±0.19</td><td style="padding:8px 12px;text-align:right">88.00±0.09</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">qnli</td><td style="padding:8px 12px;text-align:right;font-weight:600">90.48±0.17</td><td style="padding:8px 12px;text-align:right">89.94±0.18</td><td style="padding:8px 12px;text-align:right">89.89±0.13</td><td style="padding:8px 12px;text-align:right">89.64±0.17</td><td style="padding:8px 12px;text-align:right">89.87±0.16</td><td style="padding:8px 12px;text-align:right">89.48±0.10</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">rte</td><td style="padding:8px 12px;text-align:right">91.94±0.50</td><td style="padding:8px 12px;text-align:right">93.84±0.57</td><td style="padding:8px 12px;text-align:right;font-weight:600">93.94±0.34</td><td style="padding:8px 12px;text-align:right">92.30±0.75</td><td style="padding:8px 12px;text-align:right">92.42±0.40</td><td style="padding:8px 12px;text-align:right">92.54±0.42</td></tr>
+          <tr style="border-top:1.5px solid var(--murekkep);border-bottom:1px solid var(--cizgi)"><td style="padding:10px 12px">ORT</td><td style="padding:10px 12px;text-align:right;font-weight:600">79.87±0.23</td><td style="padding:10px 12px;text-align:right">77.64±0.37</td><td style="padding:10px 12px;text-align:right">77.83±0.57</td><td style="padding:10px 12px;text-align:right">77.92±0.48</td><td style="padding:10px 12px;text-align:right;color:var(--gol);font-weight:600">78.41±0.32</td><td style="padding:10px 12px;text-align:right">77.66±0.37</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">Sıralama</h3>
+    <div style="overflow-x:auto;margin-bottom:40px">
+      <table style="border-collapse:collapse;width:100%;min-width:640px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">#</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Model</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">ORT</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Seed bazında</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;text-align:right;color:var(--soluk)">1</td><td style="padding:8px 12px">BERTurk</td><td style="padding:8px 12px;text-align:right;font-weight:600">79.87 ± 0.23</td><td style="padding:8px 12px;color:var(--soluk)">79.78 79.96 79.58 79.84 80.21</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;text-align:right;color:var(--soluk)">2</td><td style="padding:8px 12px;color:var(--gol)">Mogan-anneal1k</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--gol)">78.41 ± 0.32</td><td style="padding:8px 12px;color:var(--soluk)">78.15 78.13 78.29 78.62 78.86</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;text-align:right;color:var(--soluk)">3</td><td style="padding:8px 12px">Mogan-anneal</td><td style="padding:8px 12px;text-align:right">77.92 ± 0.48</td><td style="padding:8px 12px;color:var(--soluk)">77.36 77.77 77.65 78.49 78.34</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;text-align:right;color:var(--soluk)">4</td><td style="padding:8px 12px">TabiBERT</td><td style="padding:8px 12px;text-align:right">77.83 ± 0.57</td><td style="padding:8px 12px;color:var(--soluk)">76.89 78.40 77.89 77.82 78.13</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;text-align:right;color:var(--soluk)">5</td><td style="padding:8px 12px">Mogan-soup</td><td style="padding:8px 12px;text-align:right">77.66 ± 0.37</td><td style="padding:8px 12px;color:var(--soluk)">77.17 77.48 77.59 77.97 78.08</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px;text-align:right;color:var(--soluk)">6</td><td style="padding:8px 12px">ModernBERT-TR</td><td style="padding:8px 12px;text-align:right">77.64 ± 0.37</td><td style="padding:8px 12px;color:var(--soluk)">77.84 77.11 78.10 77.64 77.52</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure style="margin:0 0 40px">
+      <svg viewBox="0 0 880 300" width="880" role="img" aria-label="TRGLUE ortalamasını model başına gösteren bar grafiği; barların üstündeki dikey çizgiler beş seed üzerindeki standart sapmayı gösterir. BERTurk 79.87, Mogan-anneal1k 78.41, Mogan-anneal 77.92, TabiBERT 77.83, Mogan-soup 77.66, ModernBERT-TR 77.64." style="display:block;width:100%;height:auto;max-width:880px">
+        <defs>
+          <pattern id="tarama-gri" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="var(--soluk)" stroke-width="0.7" opacity="0.55"></line>
+          </pattern>
+          <pattern id="tarama-flamingo" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="var(--flamingo)" stroke-width="0.9"></line>
+          </pattern>
+        </defs>
+        <g stroke="var(--cizgi)" stroke-width="1" fill="none">
+          <line x1="120" y1="63.5" x2="860" y2="63.5"></line>
+          <line x1="120" y1="110.5" x2="860" y2="110.5"></line>
+          <line x1="120" y1="156.5" x2="860" y2="156.5"></line>
+          <line x1="120" y1="203.5" x2="860" y2="203.5"></line>
+        </g>
+        <g stroke="var(--soluk)" stroke-width="1" fill="none">
+          <line x1="120.5" y1="40" x2="120.5" y2="250"></line>
+          <line x1="120" y1="250.5" x2="860" y2="250.5"></line>
+        </g>
+        <g fill="var(--soluk)" font-family="'IBM Plex Mono',monospace" font-size="11">
+          <text x="112" y="67" text-anchor="end">80</text>
+          <text x="112" y="114" text-anchor="end">79</text>
+          <text x="112" y="160" text-anchor="end">78</text>
+          <text x="112" y="207" text-anchor="end">77</text>
+          <text x="112" y="254" text-anchor="end">76</text>
+          <text x="120" y="30">TRGLUE ORT</text>
+        </g>
+        <g stroke-width="1">
+          <rect x="150.5" y="69.5" width="62" height="181" fill="url(#tarama-gri)" stroke="var(--soluk)"></rect>
+          <rect x="273.5" y="173.5" width="62" height="77" fill="url(#tarama-gri)" stroke="var(--soluk)"></rect>
+          <rect x="396.5" y="164.5" width="62" height="86" fill="url(#tarama-gri)" stroke="var(--soluk)"></rect>
+          <rect x="519.5" y="160.5" width="62" height="90" fill="url(#tarama-flamingo)" stroke="var(--flamingo)"></rect>
+          <rect x="642.5" y="137.5" width="62" height="113" fill="url(#tarama-flamingo)" stroke="var(--flamingo)"></rect>
+          <rect x="765.5" y="172.5" width="62" height="78" fill="url(#tarama-flamingo)" stroke="var(--flamingo)"></rect>
+        </g>
+        <g stroke="var(--murekkep)" stroke-width="1" fill="none">
+          <path d="M181.5 58.7 V80.1 M175.5 58.7 H187.5 M175.5 80.1 H187.5"></path>
+          <path d="M304.5 156.2 V190.8 M298.5 156.2 H310.5 M298.5 190.8 H310.5"></path>
+          <path d="M427.5 138 V191.2 M421.5 138 H433.5 M421.5 191.2 H433.5"></path>
+          <path d="M550.5 138 V182.8 M544.5 138 H556.5 M544.5 182.8 H556.5"></path>
+          <path d="M673.5 122.6 V152.4 M667.5 122.6 H679.5 M667.5 152.4 H679.5"></path>
+          <path d="M796.5 155.3 V189.9 M790.5 155.3 H802.5 M790.5 189.9 H802.5"></path>
+        </g>
+        <g font-family="'IBM Plex Mono',monospace" font-size="12" text-anchor="middle" fill="var(--murekkep)">
+          <text x="181.5" y="51">79.87</text>
+          <text x="304.5" y="148">77.64</text>
+          <text x="427.5" y="130">77.83</text>
+          <text x="550.5" y="130">77.92</text>
+          <text x="673.5" y="115">78.41</text>
+          <text x="796.5" y="147">77.66</text>
+        </g>
+        <g font-family="'IBM Plex Mono',monospace" font-size="11" text-anchor="middle" fill="var(--soluk)">
+          <text x="181.5" y="272">BERTurk</text>
+          <text x="304.5" y="272">ModernBERT-TR</text>
+          <text x="427.5" y="272">TabiBERT</text>
+          <text x="550.5" y="272" fill="var(--flamingo)">Mogan-anneal</text>
+          <text x="673.5" y="272" fill="var(--flamingo)">Mogan-anneal1k</text>
+          <text x="796.5" y="272" fill="var(--flamingo)">Mogan-soup</text>
+        </g>
+      </svg>
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk);margin:8px 0 0">Şekil 3 — TRGLUE sekiz görev ortalaması; dikey çizgiler beş seed üzerindeki standart sapma. Eksen 76'dan başlar, sıfırdan değil.</figcaption>
+    </figure>
+
+    <figure style="margin:0">
+      <svg viewBox="0 0 880 300" width="880" role="img" aria-label="Model başına beş seed sonucunun dağılım grafiği; her nokta bir seed, yatay çizgi ortalamadır. Seed aralıkları: BERTurk 79.58–80.21, Mogan-anneal1k 78.13–78.86, Mogan-anneal 77.36–78.49, TabiBERT 76.89–78.40, Mogan-soup 77.17–78.08, ModernBERT-TR 77.11–78.10." style="display:block;width:100%;height:auto;max-width:880px">
+        <g stroke="var(--cizgi)" stroke-width="1" fill="none">
+          <line x1="120" y1="63.5" x2="860" y2="63.5"></line>
+          <line x1="120" y1="110.5" x2="860" y2="110.5"></line>
+          <line x1="120" y1="156.5" x2="860" y2="156.5"></line>
+          <line x1="120" y1="203.5" x2="860" y2="203.5"></line>
+        </g>
+        <g stroke="var(--soluk)" stroke-width="1" fill="none">
+          <line x1="120.5" y1="40" x2="120.5" y2="250"></line>
+          <line x1="120" y1="250.5" x2="860" y2="250.5"></line>
+        </g>
+        <g fill="var(--soluk)" font-family="'IBM Plex Mono',monospace" font-size="11">
+          <text x="112" y="67" text-anchor="end">80</text>
+          <text x="112" y="114" text-anchor="end">79</text>
+          <text x="112" y="160" text-anchor="end">78</text>
+          <text x="112" y="207" text-anchor="end">77</text>
+          <text x="120" y="30">SEED BAZINDA ORT</text>
+        </g>
+        <g fill="none" stroke-width="1.2">
+          <circle cx="159.5" cy="73.6" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="170.5" cy="65.2" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="181.5" cy="82.9" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="192.5" cy="70.8" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="203.5" cy="53.5" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="282.5" cy="163.9" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="293.5" cy="198.2" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="304.5" cy="152" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="315.5" cy="173.4" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="326.5" cy="179" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="405.5" cy="208.2" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="416.5" cy="138" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="427.5" cy="161.5" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="438.5" cy="164.8" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="449.5" cy="150.6" r="3" stroke="var(--soluk)"></circle>
+          <circle cx="528.5" cy="186.3" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="539.5" cy="167.1" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="550.5" cy="172.7" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="561.5" cy="133.8" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="572.5" cy="140.8" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="651.5" cy="149.7" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="662.5" cy="150.6" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="673.5" cy="143.1" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="684.5" cy="127.7" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="695.5" cy="116.5" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="774.5" cy="195.4" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="785.5" cy="181" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="796.5" cy="175.5" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="807.5" cy="157.7" r="3" stroke="var(--flamingo)"></circle>
+          <circle cx="818.5" cy="152.9" r="3" stroke="var(--flamingo)"></circle>
+        </g>
+        <g stroke="var(--murekkep)" stroke-width="1.5" fill="none">
+          <line x1="155.5" y1="69.4" x2="207.5" y2="69.4"></line>
+          <line x1="278.5" y1="173.5" x2="330.5" y2="173.5"></line>
+          <line x1="401.5" y1="164.6" x2="453.5" y2="164.6"></line>
+          <line x1="524.5" y1="160.4" x2="576.5" y2="160.4"></line>
+          <line x1="647.5" y1="137.5" x2="699.5" y2="137.5"></line>
+          <line x1="770.5" y1="172.6" x2="822.5" y2="172.6"></line>
+        </g>
+        <g font-family="'IBM Plex Mono',monospace" font-size="11" text-anchor="middle" fill="var(--soluk)">
+          <text x="181.5" y="272">BERTurk</text>
+          <text x="304.5" y="272">ModernBERT-TR</text>
+          <text x="427.5" y="272">TabiBERT</text>
+          <text x="550.5" y="272" fill="var(--flamingo)">Mogan-anneal</text>
+          <text x="673.5" y="272" fill="var(--flamingo)">Mogan-anneal1k</text>
+          <text x="796.5" y="272" fill="var(--flamingo)">Mogan-soup</text>
+        </g>
+      </svg>
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk);margin:8px 0 0">Şekil 4 — Her nokta bir seed'in TRGLUE ortalaması; yatay çizgi beş seed'in ortalamasıdır. Mogan-anneal1k'in dağılımı diğer Mogan varyantlarından yukarıda ve daha dar.</figcaption>
+    </figure>
+  </section>
+
+  <section id="ablasyon" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Ablasyon: CLM→MLM vs saf MLM</h2>
+    <p style="max-width:680px;margin:0 0 24px;color:var(--soluk)">İki koşu aynı veri hattı, aynı mimari ve aynı toplam adım sayısı (10.000) ile eğitildi. ABL-1 baştan sona MLM; ABL-2 ilk %25 CLM, kalan %75 MLM. Eşit toplam adımda ABL-1, ABL-2'den %33 daha fazla MLM adımı görür — aşağıdaki farklar bu handikaba rağmen elde edildi. Protokol her iki checkpoint için birebir aynı: seed=1234, mask_rate=0.30, max_len=512.</p>
+
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">Linear probe (donuk temsiller)</h3>
+    <div style="overflow-x:auto;margin-bottom:40px">
+      <table style="border-collapse:collapse;width:100%;min-width:640px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Görev</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Sınıf</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Majority</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">MLM-only</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--gol)">CLM25+MLM75</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">∆</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">POS (BOUN), n=7.990</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">15</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">29.85</td><td style="padding:8px 12px;text-align:right;font-weight:600">87.62</td><td style="padding:8px 12px;text-align:right">87.42</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">−0.20</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Haber kategorisi, n=230</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">5</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">20.00</td><td style="padding:8px 12px;text-align:right">97.39</td><td style="padding:8px 12px;text-align:right">97.39</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">0.00</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">NLI, n=2.001</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">3</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">33.38</td><td style="padding:8px 12px;text-align:right">48.53</td><td style="padding:8px 12px;text-align:right;font-weight:600">50.22</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+1.69</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Ürün yorumu, n=2.000</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">2</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">50.00</td><td style="padding:8px 12px;text-align:right">80.75</td><td style="padding:8px 12px;text-align:right;font-weight:600">81.80</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+1.05</td></tr>
+          <tr style="border-top:1.5px solid var(--murekkep);border-bottom:1px solid var(--cizgi)"><td style="padding:10px 12px">Ortalama</td><td style="padding:10px 12px;text-align:right;color:var(--soluk)">—</td><td style="padding:10px 12px;text-align:right;color:var(--soluk)">—</td><td style="padding:10px 12px;text-align:right">78.57</td><td style="padding:10px 12px;text-align:right;font-weight:600;color:var(--gol)">79.21</td><td style="padding:10px 12px;text-align:right;color:var(--soluk)">+0.64</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">MS MARCO retrieval</h3>
+    <p style="max-width:680px;margin:0 0 20px;color:var(--soluk)">Contrastive ince ayar olmadan, doğrudan ön eğitim temsilleriyle (5.000 sorgu, 5.000 belgelik havuz). Mutlak değerler bu yüzden düşüktür; anlamlı olan iki model arasındaki orandır. Rastgele taban @1 = %0.02.</p>
+    <div style="overflow-x:auto;margin-bottom:40px">
+      <table style="border-collapse:collapse;width:100%;min-width:600px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Metrik</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">MLM-only</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--gol)">CLM25+MLM75</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">∆</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Oran</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mean R@1</td><td style="padding:8px 12px;text-align:right">2.96</td><td style="padding:8px 12px;text-align:right;font-weight:600">10.86</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+7.90</td><td style="padding:8px 12px;text-align:right">×3.67</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mean R@5</td><td style="padding:8px 12px;text-align:right">7.28</td><td style="padding:8px 12px;text-align:right;font-weight:600">20.84</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+13.56</td><td style="padding:8px 12px;text-align:right">×2.86</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mean R@10</td><td style="padding:8px 12px;text-align:right">9.92</td><td style="padding:8px 12px;text-align:right;font-weight:600">26.34</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+16.42</td><td style="padding:8px 12px;text-align:right">×2.66</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">mean MRR</td><td style="padding:8px 12px;text-align:right">5.59</td><td style="padding:8px 12px;text-align:right;font-weight:600">16.23</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+10.64</td><td style="padding:8px 12px;text-align:right">×2.90</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">CLS R@1</td><td style="padding:8px 12px;text-align:right">0.42</td><td style="padding:8px 12px;text-align:right">2.90</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+2.48</td><td style="padding:8px 12px;text-align:right">×6.90</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">CLS R@10</td><td style="padding:8px 12px;text-align:right">2.00</td><td style="padding:8px 12px;text-align:right">6.42</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+4.42</td><td style="padding:8px 12px;text-align:right">×3.21</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">CLS MRR</td><td style="padding:8px 12px;text-align:right">1.07</td><td style="padding:8px 12px;text-align:right">4.25</td><td style="padding:8px 12px;text-align:right;color:var(--soluk)">+3.18</td><td style="padding:8px 12px;text-align:right">×3.97</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">Embedding geometrisi</h3>
+    <p style="max-width:680px;margin:0 0 20px;color:var(--soluk)">Probe'ların eşit, retrieval'ın üç kat farklı çıkması çelişki değil: probe öğrenilen bir doğrusal dönüşümdür ve baskın yönleri yeniden ölçekleyebilir, cosine benzerliği ham geometriye bağımlıdır. Belirleyici satır birinci bileşenin varyans payı — saf MLM'de tek bir yön varyansın %28.1'ini yutuyor.</p>
+    <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:560px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Metrik</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">MLM-only</th>
+            <th scope="col" style="text-align:right;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--gol)">CLM25+MLM75</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">cos_raw (anizotropi)</td><td style="padding:8px 12px;text-align:right">0.9731</td><td style="padding:8px 12px;text-align:right">0.9595</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Efektif rank</td><td style="padding:8px 12px;text-align:right">70.18</td><td style="padding:8px 12px;text-align:right">55.59</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">1. bileşenin varyans payı</td><td style="padding:8px 12px;text-align:right">0.2810</td><td style="padding:8px 12px;text-align:right;font-weight:600">0.1187</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">İlk 10 bileşenin payı</td><td style="padding:8px 12px;text-align:right">0.4896</td><td style="padding:8px 12px;text-align:right">0.5675</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">STS Spearman</td><td style="padding:8px 12px;text-align:right">0.4833</td><td style="padding:8px 12px;text-align:right;font-weight:600">0.5026</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">STS Pearson</td><td style="padding:8px 12px;text-align:right">0.4536</td><td style="padding:8px 12px;text-align:right;font-weight:600">0.4905</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="max-width:680px;margin:20px 0 0;color:var(--soluk)">Karar: full pre-train ABL-2 (CLM %25 → MLM %75) konfigürasyonu ile yapılıyor. Sınırlılıklar: tek seed, tek adım noktası (10.000); probe görevlerinin ikisi doymuş; retrieval ayağı tek veri kümesine dayanıyor. CLS pooling her iki modelde de kullanılamaz durumda — downstream retrieval'da mean pooling varsayılan olmalı.</p>
+  </section>
+
+  <section id="kullanim" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 8px">Kullanım</h2>
+    <p style="max-width:680px;margin:0 0 20px;color:var(--soluk)">Model Transformers ile doğrudan yüklenir; ONNX ihracı için not aşağıda.</p>
+    <div style="border:1px solid var(--cizgi);background:var(--yuzey);margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--cizgi);padding:6px 12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk)">python · transformers</span>
+        <button type="button" onClick="{{ kopyalaKod }}" style="border:1px solid var(--cizgi);background:transparent;color:var(--gol);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:2px 8px;border-radius:3px;cursor:pointer;transition:background-color 120ms linear" style-hover="background:var(--kagit)">{{ kodEtiketi }}</button>
+      </div>
+      <pre id="kod-blogu" style="margin:0;padding:12px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.6;color:var(--murekkep)"><code><span style="color:var(--soluk)">from</span> transformers <span style="color:var(--soluk)">import</span> AutoTokenizer, AutoModel
+
+tok = AutoTokenizer.from_pretrained(<span style="color:var(--saz)">"[HF_REPO]"</span>)
+model = AutoModel.from_pretrained(<span style="color:var(--saz)">"[HF_REPO]"</span>)
+
+metin = <span style="color:var(--saz)">"Mogan Gölü'nün kıyısında sabah sisi vardı."</span>
+ciktilar = model(**tok(metin, return_tensors=<span style="color:var(--saz)">"pt"</span>))
+gizli = ciktilar.last_hidden_state  <span style="color:var(--soluk)"># [1, T, H]</span></code></pre>
+    </div>
+    <p style="max-width:680px;margin:0;font-size:15px;color:var(--soluk)">Depo adı yayınla birlikte kesinleşecek: <span style="font-family:'IBM Plex Mono',monospace">[HF_REPO]</span> — koleksiyon <a href="https://huggingface.co/moganai">huggingface.co/moganai</a> altında. Retrieval kullanımında mean pooling varsayılan olmalıdır; [CLS] embedding'i cümle düzeyi bir hedefle eğitilmedi. ONNX: <span style="font-family:'IBM Plex Mono',monospace">[DOLDURULACAK]</span></p>
+  </section>
+
+  <section id="ciktilar" style="padding:64px 0 0">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:500;margin:0 0 24px">Yayınlanan çıktılar</h2>
+    <div style="overflow-x:auto;margin-bottom:32px">
+      <table style="border-collapse:collapse;width:100%;min-width:560px;font-size:15px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--murekkep)">
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Çıktı</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Tür</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Bağlantı</th>
+            <th scope="col" style="text-align:left;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--murekkep)">Lisans</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:'IBM Plex Mono',monospace">
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">MoganBert-base</td><td style="padding:8px 12px">model</td><td style="padding:8px 12px"><a href="#ciktilar">[HF LİNKİ]</a></td><td style="padding:8px 12px">[?]</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Eğitim verisi</td><td style="padding:8px 12px">dataset</td><td style="padding:8px 12px"><a href="#ciktilar">[HF LİNKİ]</a></td><td style="padding:8px 12px">[?]</td></tr>
+          <tr style="border-bottom:1px solid var(--cizgi)"><td style="padding:8px 12px">Eğitim kodu</td><td style="padding:8px 12px">depo</td><td style="padding:8px 12px"><a href="#ciktilar">[GITHUB LİNKİ]</a></td><td style="padding:8px 12px">[?]</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="font-size:19px;font-weight:600;margin:0 0 12px">Atıf</h3>
+    <div style="border:1px solid var(--cizgi);background:var(--yuzey)">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--cizgi);padding:6px 12px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--soluk)">bibtex</span>
+        <button type="button" onClick="{{ kopyalaBibtex }}" style="border:1px solid var(--cizgi);background:transparent;color:var(--gol);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:2px 8px;border-radius:3px;cursor:pointer;transition:background-color 120ms linear" style-hover="background:var(--kagit)">{{ bibEtiketi }}</button>
+      </div>
+      <pre id="bibtex-blogu" style="margin:0;padding:12px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.6"><code>@misc{moganbert[YIL],
+  title  = {MoganBert: Türkçe için bir encoder modeli},
+  author = {[YAZARLAR]},
+  year   = {[YIL]},
+  url    = {[URL]}
+}</code></pre>
+    </div>
+  </section>
+</article>
+
+<footer style="border-top:1px solid var(--cizgi)">
+  <div style="max-width:1040px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;font-size:14px;color:var(--soluk)">
+    <span>[EKİP] · [KURUM]</span>
+    <span>İletişim: <a href="#ciktilar">[E-POSTA]</a></span>
+    <span style="font-family:'IBM Plex Mono',monospace">Son güncelleme: [TARİH]</span>
+  </div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { kodEtiketi: "kopyala", bibEtiketi: "kopyala" };
+
+  kopyala(selector, key) {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    const yaz = () => {
+      this.setState({ [key]: "kopyalandı" });
+      setTimeout(() => this.setState({ [key]: "kopyala" }), 1600);
+    };
+    const metin = el.innerText;
+    if (navigator.clipboard) navigator.clipboard.writeText(metin).then(yaz, () => {});
+    else yaz();
+  }
+
+  renderVals() {
+    return {
+      kodEtiketi: this.state.kodEtiketi,
+      bibEtiketi: this.state.bibEtiketi,
+      kopyalaKod: () => this.kopyala("#kod-blogu", "kodEtiketi"),
+      kopyalaBibtex: () => this.kopyala("#bibtex-blogu", "bibEtiketi")
+    };
+  }
+}
+</script>
+</body>
+</html>

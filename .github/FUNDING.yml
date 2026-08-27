@@ -1,0 +1,12 @@
+# Depo sayfasindaki Sponsor dugmesi. Kullanacagin satirin basindaki # kaldir.
+# Bu dosya org duzeyinde bir ".github" deposuna konursa tum depolarda gorunur.
+
+# github: [moganai]          # GitHub Sponsors -- once basvuru onaylanmali
+# ko_fi: moganai
+# buy_me_a_coffee: moganai
+# patreon: moganai
+# open_collective: moganai
+# liberapay: moganai
+
+# En fazla 4 serbest adres:
+# custom: ["https://moganai.github.io/#destek"]
