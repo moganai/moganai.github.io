@@ -58,8 +58,11 @@ a{color:var(--lacivert-2)}
 .kelime-isareti .t1{color:var(--lacivert)} .kelime-isareti .t2{color:var(--yesil)}
 .slogan{max-width:580px;margin:26px 0 0;font-size:19px;line-height:1.5;color:#2b3350}
 .slogan b{color:var(--lacivert);font-weight:600}
-.ust-uyari{max-width:620px;margin:24px 0 0;padding:12px 16px;font-size:15px;line-height:1.5;color:#2b3350;background:var(--krem-acik);border:1px solid var(--krem-koyu);border-left:4px solid var(--hardal)}
-.ust-uyari b{color:var(--lacivert)}
+.ust-uyari{max-width:620px;margin:26px 0 0;background:var(--krem-acik);border:1px solid var(--krem-koyu);padding:18px 20px}
+.ust-uyari .ust-satir{display:flex;align-items:center;gap:10px}
+.ust-uyari .kup{width:20px;height:20px;flex:none}
+.ust-uyari h3{margin:0;font:700 18px var(--baslik);color:var(--lacivert);letter-spacing:-.01em}
+.ust-uyari p{margin:8px 0 0;font-size:14.5px;color:#3a4256}
 .cipler{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap;max-width:620px}
 .cipler span{font:500 14px var(--govde);color:var(--yesil);background:var(--krem-acik);border:1px solid var(--krem-koyu);padding:3px 10px}
 .istat{display:flex;gap:0;margin-top:40px;flex-wrap:wrap;max-width:640px}
@@ -137,7 +140,7 @@ details.ek summary{cursor:pointer;font:600 14px var(--govde);color:var(--laciver
 details.ek[open] summary{margin-bottom:10px}
 .izin{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:#3a4256;margin-bottom:10px;cursor:pointer}
 .izin input{margin-top:4px;width:18px;height:18px;accent-color:var(--lacivert);flex:none}
-.uyari{font-size:14px;color:#3a4256;background:var(--krem-acik);border-left:3px solid var(--hardal);padding:10px 14px;margin:0 0 16px}
+.uyari{font-size:14px;color:#3a4256;background:var(--krem-acik);border:1px solid var(--krem-koyu);padding:12px 16px;margin:0 0 16px}
 .uyari b{color:var(--lacivert)}
 .bal{position:absolute;left:-5000px;width:1px;height:1px;overflow:hidden}
 .gonder-satir{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px}
@@ -242,7 +245,10 @@ footer nav{display:flex;gap:18px;flex-wrap:wrap}
       <h1><span class="t1">MoganOCR</span><span class="t2">-Topluluk</span></h1>
     </div>
     <p class="slogan" data-i18n="slogan"></p>
-    <p class="ust-uyari" role="note" data-i18n="ust.uyari"></p>
+    <div class="ust-uyari" role="note">
+      <div class="ust-satir"><svg class="kup" aria-hidden="true"><use href="#kup-y"/></svg><h3 data-i18n="ust.uyari.b"></h3></div>
+      <p data-i18n="ust.uyari.p"></p>
+    </div>
     <div class="cipler" id="cipler"></div>
     <div class="istat" id="istat"></div>
     <div class="dugmeler">
@@ -407,7 +413,8 @@ const ACILIS = performance.now();
 const METIN = {
   tr: {
     "nav.nasil": "Nasıl çalışır", "nav.gonder": "Belge gönder", "nav.sss": "Sorular", "nav.sil": "Kaydımı sil", "nav.model": "MoganOCR-TR ↗",
-    "ust.uyari": "<b>Yalnızca kişisel veri içermeyen ve paylaşılmasında sakınca olmayan görselleri gönderin.</b> İsim, T.C. kimlik no, adres, telefon, imza gibi bilgileri karalayın ya da belgenin benzerini sentetik olarak hazırlayıp onu yükleyin.",
+    "ust.uyari.b": "Yalnızca paylaşılabilir görseller gönderin",
+    "ust.uyari.p": "Görseller kişisel veri içermesin ve paylaşılmasında sakınca olmasın. İsim, T.C. kimlik no, adres, telefon, imza gibi bilgileri karalayın ya da belgenin sentetik bir benzerini hazırlayıp onu yükleyin.",
     slogan: "OCR'da zorlandığınız ya da iyi sonuç alamadığınız belgeleri gönderin. <b>MoganOCR-TR'nin bir sonraki sürümünü</b> gönderdiğiniz belgeler ve onlara benzeyen verilerle eğitip daha iyi bir model çıkarmaya çalışacağız.",
     cipler: ["Tablolar", "El yazısı", "Formüller", "Eski taramalar", "Fiş · fatura · form", "Telefon fotoğrafları", "Sentetik belgeler"],
     istat: [["89,9", "TOB-Skor"], ["#1", "OCR'a özel modeller"], ["357.763", "eğitim sayfası"]],
@@ -481,7 +488,8 @@ const METIN = {
   },
   en: {
     "nav.nasil": "How it works", "nav.gonder": "Submit", "nav.sss": "FAQ", "nav.sil": "Delete my entry", "nav.model": "MoganOCR-TR ↗",
-    "ust.uyari": "<b>Only send images that contain no personal data and are fine to share.</b> Black out names, ID numbers, addresses, phone numbers and signatures, or make a synthetic look-alike of the document and upload that instead.",
+    "ust.uyari.b": "Send shareable images only",
+    "ust.uyari.p": "Images should contain no personal data and be fine to share. Black out names, ID numbers, addresses, phone numbers and signatures, or make a synthetic look-alike of the document and upload that instead.",
     slogan: "Send us the documents OCR struggles with. We will train <b>the next version of MoganOCR-TR</b> on your documents and data like them, and try to build a better model.",
     cipler: ["Tables", "Handwriting", "Formulas", "Old scans", "Receipts · invoices · forms", "Phone photos", "Synthetic documents"],
     istat: [["89.9", "TOB Score"], ["#1", "among OCR-specific models"], ["357,763", "training pages"]],
