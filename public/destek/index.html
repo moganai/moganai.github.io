@@ -58,6 +58,8 @@ a{color:var(--lacivert-2)}
 .kelime-isareti .t1{color:var(--lacivert)} .kelime-isareti .t2{color:var(--yesil)}
 .slogan{max-width:580px;margin:26px 0 0;font-size:19px;line-height:1.5;color:#2b3350}
 .slogan b{color:var(--lacivert);font-weight:600}
+.ust-uyari{max-width:620px;margin:24px 0 0;padding:12px 16px;font-size:15px;line-height:1.5;color:#2b3350;background:var(--krem-acik);border:1px solid var(--krem-koyu);border-left:4px solid var(--hardal)}
+.ust-uyari b{color:var(--lacivert)}
 .cipler{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap;max-width:620px}
 .cipler span{font:500 14px var(--govde);color:var(--yesil);background:var(--krem-acik);border:1px solid var(--krem-koyu);padding:3px 10px}
 .istat{display:flex;gap:0;margin-top:40px;flex-wrap:wrap;max-width:640px}
@@ -240,6 +242,7 @@ footer nav{display:flex;gap:18px;flex-wrap:wrap}
       <h1><span class="t1">MoganOCR</span><span class="t2">-Topluluk</span></h1>
     </div>
     <p class="slogan" data-i18n="slogan"></p>
+    <p class="ust-uyari" role="note" data-i18n="ust.uyari"></p>
     <div class="cipler" id="cipler"></div>
     <div class="istat" id="istat"></div>
     <div class="dugmeler">
@@ -404,6 +407,7 @@ const ACILIS = performance.now();
 const METIN = {
   tr: {
     "nav.nasil": "Nasıl çalışır", "nav.gonder": "Belge gönder", "nav.sss": "Sorular", "nav.sil": "Kaydımı sil", "nav.model": "MoganOCR-TR ↗",
+    "ust.uyari": "<b>Yalnızca kişisel veri içermeyen ve paylaşılmasında sakınca olmayan görselleri gönderin.</b> İsim, T.C. kimlik no, adres, telefon, imza gibi bilgileri karalayın ya da belgenin benzerini sentetik olarak hazırlayıp onu yükleyin.",
     slogan: "OCR'da zorlandığınız ya da iyi sonuç alamadığınız belgeleri gönderin. <b>MoganOCR-TR'nin bir sonraki sürümünü</b> gönderdiğiniz belgeler ve onlara benzeyen verilerle eğitip daha iyi bir model çıkarmaya çalışacağız.",
     cipler: ["Tablolar", "El yazısı", "Formüller", "Eski taramalar", "Fiş · fatura · form", "Telefon fotoğrafları", "Sentetik belgeler"],
     istat: [["89,9", "TOB-Skor"], ["#1", "OCR'a özel modeller"], ["357.763", "eğitim sayfası"]],
@@ -477,6 +481,7 @@ const METIN = {
   },
   en: {
     "nav.nasil": "How it works", "nav.gonder": "Submit", "nav.sss": "FAQ", "nav.sil": "Delete my entry", "nav.model": "MoganOCR-TR ↗",
+    "ust.uyari": "<b>Only send images that contain no personal data and are fine to share.</b> Black out names, ID numbers, addresses, phone numbers and signatures, or make a synthetic look-alike of the document and upload that instead.",
     slogan: "Send us the documents OCR struggles with. We will train <b>the next version of MoganOCR-TR</b> on your documents and data like them, and try to build a better model.",
     cipler: ["Tables", "Handwriting", "Formulas", "Old scans", "Receipts · invoices · forms", "Phone photos", "Synthetic documents"],
     istat: [["89.9", "TOB Score"], ["#1", "among OCR-specific models"], ["357,763", "training pages"]],
